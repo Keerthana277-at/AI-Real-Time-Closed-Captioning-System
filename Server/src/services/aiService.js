@@ -1,21 +1,28 @@
-const { GoogleGenAI } = require("@google/genai");
-const ai = new GoogleGenAI({
-    apiKey:process.env.GEMINI_API_KEY
-})
+const Groq = require("groq-sdk");
+
+const groq = new Groq({
+    apiKey:process.env.GROQ_API_KEY
+});
+
 async function simplifyText(text) {
-    const response = await ai.models.generateContent({
-        model: "gemini-2.5-pro",
-        contents: `
-        Simplify the following sentence into simple English.
-        Return only the simplified sentence.
+    const response = await groq.chat.completions.create({
+        model:"llama-3.3-70b-versatile",
+        messages: [
+            {
+                role:"user",
+                content:`
+                    simplify the following sentence into simple English.
+                    Return only the simplified sentence.
+                    ${text}
+                `
+            }
+        ]
+    });
 
-        ${text}
-    `
-    })
-    console.log(response);
-    return response;
-}  
+    return response.choices[0].message.content;
 
-module.exports ={
+}
+
+module.exports = {
     simplifyText
-} ;
+};
