@@ -86,7 +86,48 @@ async function deleteCaptions(req,res) {
           
 }
 
+async function updateCaptions(req,res) {
+    try{
+         const captions = await Caption.findById(req.params.id);
+        if(!captions)
+            return res.status(404).json({
+                message:"User not found"
+        })
+        if(captions.user.toString() !== req.user.id)
+            return res.status(403).json({
+                message:"You're not authorized to update this caption"
+        });
+        const simplifiedText = await simplifyText(req.body.originalText);
+
+        const translatedText = await translateText(simplifiedText);
+
+        req.body.simplifiedText = simplifiedText;
+
+        req.body.translatedText = translatedText;
+
+        const newCaption = await Caption.findByIdAndUpdate(
+            req.params.id,
+            req.body,
+            { new : true}
+        );
+
+        return res.status(200).json({
+            success:true,
+            message:"Captions updated successfully",
+            caption : newCaption
+        });
+    }catch(error){
+        console.log(error);
+        return res.status(500).json({
+            success:false,
+            message:"Internal server error"
+        });
+    }
+   
+}
+
 module.exports = { createCaptions,
     getCaptions,
-    deleteCaptions
+    deleteCaptions,
+    updateCaptions
  };
