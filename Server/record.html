@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Speech to Text Test</title>
+</head>
+
+<body>
+
+    <h2>🎤 Speech to Text</h2>
+
+    <button id="start">Start Recording</button>
+    <button id="stop" disabled>Stop Recording</button>
+
+    <p id="status"></p>
+
+    <h3>Transcription:</h3>
+    <p id="result"></p>
+
+    <script>
+        let recorder;
+        let audioChunks = [];
+
+        const startButton = document.getElementById("start");
+        const stopButton = document.getElementById("stop");
+        const status = document.getElementById("status");
+        const result = document.getElementById("result");
+
+        startButton.addEventListener("click", async () => {
+
+            const stream = await navigator.mediaDevices.getUserMedia({
+                audio: true
+            });
+
+            recorder = new MediaRecorder(stream);
+
+            audioChunks = [];
+
+            recorder.ondataavailable = (event) => {
+                audioChunks.push(event.data);
+            };
+
+            recorder.onstop = async () => {
+
+                const audioBlob = new Blob(audioChunks, {
+                    type: "audio/webm"
+                });
+
+                status.textContent = "Sending audio to server...";
+                result.textContent = "";
+
+                const formData = new FormData();
+
+                formData.append("audio", audioBlob, "recording.webm");
+
+                try {
+
+                    const response = await fetch(
+                        "http://localhost:5000/api/speech/transcribe",
+                        {
+                            method: "POST",
+                            body: formData
+                        }
+                    );
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        status.textContent = "Transcription successful!";
+                        result.textContent = data.text;
+                    } else {
+                        status.textContent = "Transcription failed.";
+                        result.textContent = data.message;
+                    }
+
+                } catch (error) {
+
+                    console.log(error);
+
+                    status.textContent = "Could not connect to server.";
+                }
+            };
+
+            recorder.start();
+
+            status.textContent = "Recording... Speak now!";
+
+            startButton.disabled = true;
+            stopButton.disabled = false;
+        });
+
+        stopButton.addEventListener("click", () => {
+
+            recorder.stop();
+
+            status.textContent = "Processing...";
+
+            startButton.disabled = false;
+            stopButton.disabled = true;
+        });
+    </script>
+
+</body>
+</html>
