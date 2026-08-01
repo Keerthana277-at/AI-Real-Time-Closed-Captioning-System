@@ -8,8 +8,8 @@
 
     <h2>🎤 Speech to Text</h2>
 
-    <button id="start">Start Recording</button>
-    <button id="stop" disabled>Stop Recording</button>
+    <button type="button" id="start">Start Recording</button>
+    <button  type="button" id="stop" disabled>Stop Recording</button>
 
     <p id="status"></p>
 
@@ -17,86 +17,111 @@
     <p id="result"></p>
 
     <script>
+        window.addEventListener("beforeunload", (event) => {
+            console.log("PAGE IS RELOADING!");
+        });
+        console.log("Script loaded!");
         let recorder;
-        let audioChunks = [];
+let audioChunks = [];
 
-        const startButton = document.getElementById("start");
-        const stopButton = document.getElementById("stop");
-        const status = document.getElementById("status");
-        const result = document.getElementById("result");
+const startButton = document.getElementById("start");
+const stopButton = document.getElementById("stop");
+const status = document.getElementById("status");
+const result = document.getElementById("result");
 
-        startButton.addEventListener("click", async () => {
+startButton.addEventListener("click", async () => {
 
-            const stream = await navigator.mediaDevices.getUserMedia({
-                audio: true
-            });
+    console.log("START BUTTON CLICKED");
 
-            recorder = new MediaRecorder(stream);
+    const stream = await navigator.mediaDevices.getUserMedia({
+        audio: true
+    });
 
-            audioChunks = [];
+    recorder = new MediaRecorder(stream);
 
-            recorder.ondataavailable = (event) => {
-                audioChunks.push(event.data);
-            };
+    audioChunks = [];
 
-            recorder.onstop = async () => {
+    recorder.ondataavailable = (event) => {
+        audioChunks.push(event.data);
+    };
 
-                const audioBlob = new Blob(audioChunks, {
-                    type: "audio/webm"
-                });
+    recorder.onstop = async () => {
 
-                status.textContent = "Sending audio to server...";
-                result.textContent = "";
+        console.log("RECORDING STOPPED");
 
-                const formData = new FormData();
+        const audioBlob = new Blob(audioChunks, {
+            type: "audio/webm"
+        });
 
-                formData.append("audio", audioBlob, "recording.webm");
+        console.log("AUDIO BLOB CREATED");
 
-                try {
+        const formData = new FormData();
 
-                    const response = await fetch(
-                        "http://localhost:5000/api/speech/transcribe",
-                        {
-                            method: "POST",
-                            body: formData
-                        }
-                    );
+        formData.append("audio", audioBlob, "recording.webm");
 
-                    const data = await response.json();
+        console.log("SENDING AUDIO TO SERVER");
 
-                    if (response.ok) {
-                        status.textContent = "Transcription successful!";
-                        result.textContent = data.text;
-                    } else {
-                        status.textContent = "Transcription failed.";
-                        result.textContent = data.message;
-                    }
+        status.textContent = "Sending audio to server...";
 
-                } catch (error) {
+        try {
 
-                    console.log(error);
-
-                    status.textContent = "Could not connect to server.";
+            const response = await fetch(
+                "http://localhost:5000/api/speech/transcribe",
+                {
+                    method: "POST",
+                    body: formData
                 }
-            };
+            );
 
-            recorder.start();
+            console.log("SERVER RESPONSE RECEIVED");
 
-            status.textContent = "Recording... Speak now!";
+            const data = await response.json();
 
-            startButton.disabled = true;
-            stopButton.disabled = false;
-        });
+            console.log("GROQ Response:",data);
+            alert(JSON.stringify(data));
 
-        stopButton.addEventListener("click", () => {
+            if (response.ok) {
+                status.textContent = "Transcription successful!";
+                result.textContent = data.text;
+            } else {
+                status.textContent = "Transcription failed.";
+                result.textContent = data.message;
+            }
 
-            recorder.stop();
+        } catch (error) {
 
-            status.textContent = "Processing...";
+            console.log("FETCH ERROR:", error);
 
-            startButton.disabled = false;
-            stopButton.disabled = true;
-        });
+            status.textContent = "Could not connect to server.";
+        }
+    };
+
+    recorder.start();
+
+    console.log("RECORDING STARTED");
+
+    status.textContent = "Recording... Speak now!";
+
+    startButton.disabled = true;
+    stopButton.disabled = false;
+});
+
+
+stopButton.addEventListener("click", (event) => {
+
+    event.preventDefault();
+
+    console.log("STOP BUTTON CLICKED");
+
+    recorder.stop();
+
+    console.log("RECORDER STOP CALLED");
+
+    status.textContent = "Processing...";
+
+    startButton.disabled = false;
+    stopButton.disabled = true;
+});
     </script>
 
 </body>
