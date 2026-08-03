@@ -1,5 +1,5 @@
 const Groq = require("groq-sdk");
-
+const { translateText } = require("./translation/translationService");
 const groq = new Groq({
     apiKey:process.env.GROQ_API_KEY
 });
@@ -24,5 +24,6 @@ async function simplifyText(text) {
 }
 
 module.exports = {
-    simplifyText
+    simplifyText,
+    translateText
 };

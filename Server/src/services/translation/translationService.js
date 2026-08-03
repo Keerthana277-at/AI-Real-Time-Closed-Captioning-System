@@ -10,8 +10,8 @@ async function translateText(text) {
             {
                 role:"user",
                 content:`
-                    Translate the following text into Tamil.
-                    Return only the translated text.
+                    Translate the following sentence into Tamil.
+                    Return only the Tamil translation.
 
                     ${text}
                 `
