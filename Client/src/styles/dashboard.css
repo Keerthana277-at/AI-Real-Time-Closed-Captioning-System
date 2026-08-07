@@ -106,3 +106,6 @@ body{
         width: 100%;
     }
 }
+.dashboard-container h2{
+    color: #1d4ed8;
+}
