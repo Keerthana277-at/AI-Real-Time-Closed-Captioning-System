@@ -1,19 +1,37 @@
-import { useState } from "react";
+import { useState,useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import HistoryCard from "../components/HistoryCard";
 import Captioncard from "../components/Captioncard";
 import "../styles/dashboard.css"
+import { getCaptions } from "../services/api";
 
 function Dashboard (){
 
     const [originalText,setOriginalText] = useState("");
     const [simplifiedText,setSimplifiedText] = useState("");
     const [translatedText,setTranslatedText] = useState("");
-    const [isRecording,setIsRecording] = useState("");
+    const [isRecording,setIsRecording] = useState(false);
     const [status,setStatus] = useState("");
-    const [mediaRecorder,setMediaRecorder] = useState("");
+    const [mediaRecorder,setMediaRecorder] = useState(null);
     const navigate = useNavigate();
+
+    const [captions,setCaptions] = useState([]);
+
+    useEffect(()=>{
+        const fetchHistory = async () => {
+            try{
+                const data = await getCaptions();
+
+                console.log("CAPTION HISTORY:",data);
+
+                setCaptions(data.captions);
+            }catch(error){
+                console.log("History error:",error);
+            }
+        };
+        fetchHistory();
+    },[]);
 
     const handleLogout = () => {
         localStorage.removeItem("token");
@@ -34,18 +52,18 @@ function Dashboard (){
                 audioChunks.push(event.data);
             };
 
-            recorder.onstop = async () => {
-                const audioBlob = new Blob(audioChunks,{
-                    type:"audio/webm"
-                });
+            // recorder.onstop = async () => {
+            //     const audioBlob = new Blob(audioChunks,{
+            //         type:"audio/webm"
+            //     });
 
-                console.log("Audio recorded:",audioBlob);
+            //     console.log("Audio recorded:",audioBlob);
 
-                stream.getTracks().forEach(track => track.stop());
+            //     stream.getTracks().forEach(track => track.stop());
 
-                setStatus("Processing...");
-                setIsRecording(false);
-            };
+            //     setStatus("Processing...");
+            //     setIsRecording(false);
+            // };
 
             recorder.onstop = async () => {
                 const audioBlob = new Blob(audioChunks,{
@@ -121,21 +139,112 @@ function Dashboard (){
                 mediaRecorder.stop();
         }
 
-    return (
-        <div className="dashboard-container">
-            <Navbar onLogout={handleLogout}/>
-            <h2 >Welcome, Keerthana 👋</h2>
-            <button className="start-btn"
-            onClick={isRecording ? stopRecording : startRecording}>{isRecording ? "🛑 Stop Captioning" : "🎤 Start Captioning"}
-            </button>
-            {status && <p className="status">{status}</p>}
-           <Captioncard title="Original Caprion" text={originalText}/>
-           <Captioncard title="Simplified text" text={simplifiedText}/>
-           <Captioncard title="Tamil translation" text={translatedText}/> 
-           <HistoryCard/> 
-        </div>
-        
-    );
+   return (
+    <div className="dashboard">
+
+        <Navbar onLogout={handleLogout} />
+
+        <main className="dashboard-content">
+
+            <div className="welcome-section">
+                <h1>Welcome, Keerthana 👋</h1>
+                <p>
+                    Real-time captions made simple and accessible.
+                </p>
+            </div>
+
+            {/* Recording section */}
+            <section className="recording-section">
+
+                <div className={
+                    isRecording
+                        ? "recording-indicator active"
+                        : "recording-indicator"
+                }>
+                    <span className="status-dot"></span>
+
+                    {isRecording
+                        ? "Listening..."
+                        : "Ready to caption"}
+                </div>
+
+                <button
+                    className={
+                        isRecording
+                            ? "stop-btn"
+                            : "start-btn"
+                    }
+                    onClick={
+                        isRecording
+                            ? stopRecording
+                            : startRecording
+                    }
+                >
+                    {isRecording
+                        ? "🛑 Stop Captioning"
+                        : "🎤 Start Captioning"}
+                </button>
+
+                {status && (
+                    <p className="processing-status">
+                        {status}
+                    </p>
+                )}
+
+            </section>
+
+
+            {/* Live caption */}
+            <section className="live-caption">
+
+                <div className="section-title">
+                    <span>🔴</span>
+                    <h2>Live Caption</h2>
+                </div>
+
+                <p className="live-caption-text">
+                    {originalText || "Your caption will appear here..."}
+                </p>
+
+            </section>
+
+
+            {/* Simplified caption */}
+            <Captioncard
+                title="✨ Simplified Caption"
+                text={simplifiedText}
+            />
+
+
+            {/* Tamil translation */}
+            <Captioncard
+                title="🌐 Tamil Translation"
+                text={translatedText}
+            />
+
+
+            {/* History */}
+            <div className="history-section">
+
+    <h2>📜 Recent Caption History</h2>
+
+    {captions.length === 0 ? (
+        <p>No caption history yet.</p>
+    ) : (
+        captions.map((caption) => (
+            <HistoryCard
+                key={caption._id}
+                caption={caption}
+            />
+        ))
+    )}
+
+</div>
+
+        </main>
+
+    </div>
+ );
 }
 
 export default Dashboard;

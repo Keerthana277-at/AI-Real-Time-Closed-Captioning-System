@@ -34,3 +34,26 @@ export async function loginUser(userData) {
 
     return data;
 }
+
+export async function getCaptions() {
+    const token = localStorage.getItem("token");
+
+    const response = await fetch(
+        "http://localhost:5000/api/captions",
+        {
+            method:"GET",
+            headers:{
+                Authorization:`Bearer ${token}`
+            }
+        }
+    );
+
+    const data = await response.json();
+
+    if(!response.ok){
+        throw new Error(
+            data.message || "Failed to fetch captions"
+        );
+    }
+    return data;
+}

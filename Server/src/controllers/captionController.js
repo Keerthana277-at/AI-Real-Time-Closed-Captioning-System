@@ -46,7 +46,7 @@ async function getCaptions(req,res) {
         });
         
         return res.status(200).json({
-            success:"true",
+            success:true,
             message:"Captions fetched successfully",
             captions
         })

@@ -10,11 +10,17 @@ body{
     color: #1e293b;
 }
 
+.history-section h2{
+    color: rgb(20, 98, 98)
+}
+
 .dashboard-container{
     min-height: 100vh;
     padding: 20px;
 }
-
+.welcome-section h1{
+    color: #1d4ed8;
+}
 .navbar{
     background-color: #1f2937;
     color: white;
